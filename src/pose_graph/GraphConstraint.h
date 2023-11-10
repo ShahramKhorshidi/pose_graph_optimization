@@ -1,7 +1,7 @@
 #ifndef GRAPHCONSTRAINT_H
 #define GRAPHCONSTRAINT_H
 
-#include "util/Pose2D.h"
+#include "Pose2D.h"
 #include <eigen3/Eigen/Dense>
 
 

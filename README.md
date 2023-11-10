@@ -16,7 +16,7 @@ sudo apt-get install libopencv-dev
 
 ### Source Code
 
-The source code is hosted on GitHub: [ShahramKhorshidi/pose_graph_optimization]{https://github.com/ShahramKhorshidi/pose_graph_optimization}
+The source code is hosted on GitHub: [ShahramKhorshidi/pose_graph_optimization](https://github.com/ShahramKhorshidi/pose_graph_optimization)
 ```
 # Clone pose_graph_optimization
 git clone git@github.com:ShahramKhorshidi/pose_graph_optimization.git

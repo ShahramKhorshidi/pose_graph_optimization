@@ -1,0 +1,9 @@
+# Ignore compiled binaries
+*.o
+*.out
+
+# Ignore build directory
+/build/
+
+# Ignore Visual Studio Code files
+.vscode/

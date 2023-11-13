@@ -1,5 +1,6 @@
+#include <iostream>
+#include <chrono>
 #include "PoseGraph.h"
-#include "util/StopWatch.h"
 #include<eigen3/Eigen/SparseCholesky>
 
 uint PoseGraph::nodesCount = 0;
@@ -88,8 +89,7 @@ void PoseGraph::connectLoopClosingNodes(uint nodeId1, uint nodeId2, const Pose2D
 
 void PoseGraph::optimizeGraph(const GraphNode &node1, const GraphNode &node2)
 {
-    StopWatch sw;
-    sw.start();
+    auto opt_start = std::chrono::high_resolution_clock::now();
 
     // Storing the last pose of the robot before the optimization.
     Pose2D beforeOptimization = graphNodes[nodesCount-1].nodePose;
@@ -139,20 +139,17 @@ void PoseGraph::optimizeGraph(const GraphNode &node1, const GraphNode &node2)
         /** @brief Sparse solver. */
         ls.HSparse = ls.H.sparseView();
 
-        StopWatch sw;
-        sw.start();
-
         ls.solver.compute(ls.HSparse);
         if(ls.solver.info()!=Eigen::Success)
         {
-          qDebug() << "Decomposition failed at Iteration#: " << numOfIter;
+          std::cout << "Decomposition failed at Iteration#: " << numOfIter << std::endl;
           return;
         }
 
         ls.dx = ls.solver.solve(ls.b);
         if(ls.solver.info()!=Eigen::Success)
         {
-          qDebug() << "Solving failed at Iteration#: " << numOfIter;
+          std::cout << "Solving failed at Iteration#: " << numOfIter << std::endl;
           return;
         }
         // Update the parameters.
@@ -165,9 +162,10 @@ void PoseGraph::optimizeGraph(const GraphNode &node1, const GraphNode &node2)
 
         if(ls.dx.norm() < ls.tolerance || numOfIter > ls.maxIter)
         {
-            double optTime = sw.elapsedTimeMs();
-            qDebug() << "Optimization Successful! -- Total time:" << optTime << "(ms) -- No of Iterations:"
-                     << numOfIter << "-- Delta X Norm:" << ls.dx.norm() << "\n";
+            auto opt_stop = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(opt_stop - opt_start);
+            std::cout << "Optimization Successful! -- Total time:" << duration << "(ms) -- No of Iterations:"
+                     << numOfIter << "-- Delta X Norm:" << ls.dx.norm() << std::endl;
             // Storing the correcting pose for the last pose after optimization.
             Pose2D& afterOptimization = graphNodes[nodesCount-1].nodePose;
             correctingPose = afterOptimization.diff(beforeOptimization);
@@ -181,7 +179,6 @@ void PoseGraph::optimizeGraph(const GraphNode &node1, const GraphNode &node2)
     converged = false;
 
     // Updating the line map with the new pose configuration.
-    updateLineMap();
     graphOptimized = true;
 }
 
@@ -211,86 +208,20 @@ void PoseGraph::updateGraphConstraints()
     }
 }
 
-void PoseGraph::updateLineMap()
-{
-    for (uint i = 1; i < graphNodes.size(); i++)
-    {
-        // For each node_i_ we iterate over all seen maplines by the node.
-        for (uint j = 0; j < graphNodes[i].seenMapLines.size(); j++)
-        {
-            if (!graphNodes[i].seenMapLines[j]->updated)
-            {
-                // transforming the line_j_ by the new pose configuration.
-                Pose2D trans = graphNodes[i].nodePose.diff(graphNodes[i].initPose);
-                Line l = *graphNodes[i].seenMapLines[j];
-
-                l.translate(trans.x, trans.y);
-                Vec2& p1 = l.p1();
-                Vec2& p2 = l.p2();
-                diff(p1, graphNodes[i].nodePose);
-                diff(p2, graphNodes[i].nodePose);
-                l.rotate(trans.z);
-                plus(p1, graphNodes[i].nodePose);
-                plus(p2, graphNodes[i].nodePose);
-
-                TrackedLine tl(l);
-                tl.seenP1 = true;
-                tl.seenP2 = true;
-
-                // For each line_j_ in the mapline seen by the current node_i,
-                // we check the next 70 nodes, if the line_j_ is seen by them,
-                // we add the transformed of it by addLineObservation().
-                for (uint k = i+1; k < i+70; k++)
-                {
-                    if (k < graphNodes.size() && graphNodes[k].seenMapLines.contains(graphNodes[i].seenMapLines[j]))
-                    {
-                        Pose2D trans = graphNodes[k].nodePose.diff(graphNodes[k].initPose);
-                        TrackedLine* line = graphNodes[i].seenMapLines[j];
-                        int index = graphNodes[k].seenMapLines.indexAt(line);
-                        Line l = *graphNodes[k].seenMapLines[index];
-
-                        l.translate(trans.x, trans.y);
-                        Vec2& p1 = l.p1();
-                        Vec2& p2 = l.p2();
-                        diff(p1, graphNodes[k].nodePose);
-                        diff(p2, graphNodes[k].nodePose);
-                        l.rotate(trans.z);
-                        plus(p1, graphNodes[k].nodePose);
-                        plus(p2, graphNodes[k].nodePose);
-
-                        tl.addLineObservation(l);
-                        graphNodes[k].seenMapLines[index]->updated = true;
-                    } // End_If
-                } // End_For
-                graphNodes[i].seenMapLines[j]->updated = true;
-                graphNodes[i].seenMapLines[j]->p1() = tl.p1();
-                graphNodes[i].seenMapLines[j]->p2() = tl.p2();
-            } // End_If
-        } // End_For
-        graphNodes[i].initPose = graphNodes[i].nodePose;
-    } // End_For
-
-    // If we want to optimize the line map based on several loop closing for
-    // the same lines, we have to put the line.updated flag to false again.
-    for (uint i = 1; i < graphNodes.size(); i++)
-    {
-        for (uint j = 0; j < graphNodes[i].seenMapLines.size(); j++)
-            graphNodes[i].seenMapLines[j]->updated = false;
-    }
-}
-
 Pose2D PoseGraph::getCorrectingPose() const
 {
     return correctingPose;
 }
 
 void PoseGraph::getInformationMatrix(Eigen::SparseMatrix<double> HSparse)
-{}
+{
+    
+}
 
 void PoseGraph::diff(Vec2& vec, const Pose2D& p)
 {
-    double c = fcos(p.z);
-    double s = fsin(p.z);
+    double c = std::cos(p.z);
+    double s = std::sin(p.z);
     double px = -c * p.x - s * p.y;
     double py = s * p.x - c * p.y;
     double x = c * vec.x + s * vec.y + px;
@@ -301,16 +232,10 @@ void PoseGraph::diff(Vec2& vec, const Pose2D& p)
 
 void PoseGraph::plus(Vec2& vec, const Pose2D& p)
 {
-    double c = cos(p.z);
-    double s = sin(p.z);
+    double c = std::cos(p.z);
+    double s = std::sin(p.z);
     double x = c * vec.x - s * vec.y + p.x;
     double y = s * vec.x + c * vec.y + p.y;
     vec.x = x;
     vec.y = y;
-}
-
-QDebug operator<< (QDebug dbg, const PoseGraph &graph)
-{
-    dbg << "PoseGraph";
-    return dbg;
 }

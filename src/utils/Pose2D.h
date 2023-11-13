@@ -9,6 +9,11 @@ public:
 
     Pose2D();
     Pose2D(double x, double y, double theta);
+
+    Pose2D operator-(const Pose2D &o) const;
+    Pose2D operator+(const Pose2D &o) const;
+    void operator-=(const Pose2D &o);
+    void operator+=(const Pose2D &o);
 };
 
 #endif

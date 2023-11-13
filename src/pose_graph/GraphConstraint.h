@@ -2,22 +2,14 @@
 #define GRAPHCONSTRAINT_H
 
 #include "Pose2D.h"
+#include "GraphNode.h"
 #include <eigen3/Eigen/Dense>
-
 
 /**
  * @brief GraphConstraint class to be used inside the PoseGraph class. A constraint is added from two
  * nodes, by calling addOdomConstraint() or addLoopClosingConstraint(), Later for the graph optimazation,
  * we compute the jacobians and error vector, over the constraint by calling linearizeConstraint(),
  */
-
-struct GraphNode
-{
-    uint nodeId;
-    Pose2D nodePose;
-    Pose2D initPose;
-};
-
 
 class GraphConstraint
 {
@@ -82,8 +74,6 @@ private:
     /** @brief Returns the derivative of rotation matrix SO(2).*/
     Eigen::Matrix2d getRotationMatrixDerivative(double theta) const;
 };
-
-QDebug operator<< (QDebug dbg, const GraphConstraint &constraint);
 
 #endif // GRAPHCONSTRAINT_H
 

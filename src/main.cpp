@@ -1,5 +1,6 @@
 #include "PoseGraph.h"
-    
+#include "Pose2D.h"
+
 int main()
 {
     Pose2D priorPose = Pose2D(0, 0, 0);

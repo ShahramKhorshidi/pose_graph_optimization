@@ -1,6 +1,5 @@
-#include "GraphConstraint.h"
-#include "globals.h"
 #include <cmath>
+#include "GraphConstraint.h"
 
 Eigen::Matrix3d GraphConstraint::getAij() const
 {
@@ -27,7 +26,7 @@ void GraphConstraint::addOdomConstraint(const GraphNode &node1, const GraphNode 
 
     // Both observation and measurement are expressed in frame_{i}.
     observation = posej - posei;
-    observation.z = normalizeTheta(observation.z);
+    observation.theta = normalizeTheta(observation.theta);
 
     // We set the measuremet equal to observation, as the best guess we have
     // for the initial state to start the optimization later.
@@ -45,12 +44,11 @@ void GraphConstraint::addLoopClosingConstraint(
     posei = node1.nodePose;
     posej = node2.nodePose;
     measurement = posej - posei;
-    measurement.z = normalizeTheta(measurement.z);
+    measurement.theta = normalizeTheta(measurement.theta);
     this->observation = observation;
-    this->observation.z = normalizeTheta(this->observation.z);
-    qDebug() << "Pose i=" << i << "---" << posei;
-    qDebug() << "Pose j=" << j << "---"  << posej << "\n";
+    this->observation.theta = normalizeTheta(this->observation.theta);
 }
+
 void GraphConstraint::linearizeConstraint()
 {
     constructErrorJacobianA();
@@ -61,7 +59,7 @@ void GraphConstraint::linearizeConstraint()
 void GraphConstraint::constructErrorJacobianA()
 {
     Aij = Eigen::Matrix3d::Zero();
-    double theta = posei.z;
+    double theta = posei.theta;
     Aij.block<2, 2>(0, 0) = -getRotationMatrix(theta).transpose();
     Eigen::Vector2d t_ji;
     t_ji(0) = posej.x - posei.x;
@@ -73,7 +71,7 @@ void GraphConstraint::constructErrorJacobianA()
 void GraphConstraint::constructErrorJacobianB()
 {
     Bij = Eigen::Matrix3d::Zero();
-    double theta = posei.z;
+    double theta = posei.theta;
     Bij.block<2, 2>(0, 0) = getRotationMatrix(theta).transpose();
     Bij(2, 2) = 1;
 }
@@ -82,11 +80,11 @@ void GraphConstraint::computeErrorVector()
 {
     Pose2D error = Pose2D(0, 0, 0);
     error = observation.diff(measurement);
-    error.z = normalizeTheta(error.z);
+    error.theta = normalizeTheta(error.theta);
 
     errorVector(0) = error.x;
     errorVector(1) = error.y;
-    errorVector(2) = error.z;
+    errorVector(2) = error.theta;
 }
 
 void GraphConstraint::updateConstraint(const GraphNode &node1, const GraphNode &node2)
@@ -94,40 +92,34 @@ void GraphConstraint::updateConstraint(const GraphNode &node1, const GraphNode &
     posei = node1.nodePose;
     posej = node2.nodePose;
     measurement = posej - posei;
-    measurement.z = normalizeTheta(measurement.z);
+    measurement.theta = normalizeTheta(measurement.theta);
 }
 
 double GraphConstraint::normalizeTheta(double theta) const
 {
-    theta = std::fmod((theta + PI), (2 * PI));
+    theta = std::fmod((theta + M_PI), (2 * M_PI));
     if (theta < 0)
-        theta += (2*PI);
-    theta -= PI;
+        theta += (2*M_PI);
+    theta -= M_PI;
     return theta;
 }
 
 Eigen::Matrix2d GraphConstraint::getRotationMatrix(double theta) const
 {
     Eigen::Matrix2d rotMatrix;
-    rotMatrix(0, 0) = fcos(theta);
-    rotMatrix(0, 1) = -fsin(theta);
-    rotMatrix(1, 0) = fsin(theta);
-    rotMatrix(1, 1) = fcos(theta);
+    rotMatrix(0, 0) = std::cos(theta);
+    rotMatrix(0, 1) = -std::sin(theta);
+    rotMatrix(1, 0) = std::sin(theta);
+    rotMatrix(1, 1) = std::cos(theta);
     return rotMatrix;
 }
 
 Eigen::Matrix2d GraphConstraint::getRotationMatrixDerivative(double theta) const
 {
     Eigen::Matrix2d rotMatrix;
-    rotMatrix(0, 0) = -fsin(theta);
-    rotMatrix(0, 1) = -fcos(theta);
-    rotMatrix(1, 0) = fcos(theta);
-    rotMatrix(1, 1) = -fsin(theta);
+    rotMatrix(0, 0) = -std::sin(theta);
+    rotMatrix(0, 1) = -std::cos(theta);
+    rotMatrix(1, 0) = std::cos(theta);
+    rotMatrix(1, 1) = -std::sin(theta);
     return rotMatrix;
-}
-
-QDebug operator<< (QDebug dbg, const GraphConstraint &constraint)
-{
-    dbg << "PoseGraph";
-    return dbg;
 }

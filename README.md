@@ -1,4 +1,4 @@
-# Pose Graph Optimization
+# 2D Pose Graph Optimization
 
 ## Introduction
 

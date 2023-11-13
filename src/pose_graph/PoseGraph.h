@@ -1,14 +1,10 @@
 #ifndef POSEGRAPH_H_
 #define POSEGRAPH_H_
 
-#include "globals.h"
-#include "geometry/Line.h"
-#include "util/Pose2D.h"
-#include "TrackedLine.h"
-#include "LinePair.h"
+#include <cmath>
+#include "Pose2D.h"
 #include "util/Vector.h"
 #include "util/Vec2.h"
-
 #include "GraphConstraint.h"
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
@@ -108,7 +104,7 @@ public:
     void addPriorNode(const Pose2D& priorPose);
 
     /** @brief Adds a node and a constraint to the graph from the odometry data. */
-    void addOdomNode(const Pose2D &odomPose, const Vector<LinePair>& confirmedLinePairs);
+    void addOdomNode(const Pose2D &odomPose);
 
     /** @brief Adds a node and a constraint to the graph from the loop closing. */
     void connectLoopClosingNodes(uint nodeId1, uint nodeId2, const Pose2D &observation);
@@ -116,8 +112,7 @@ public:
     /**
      * @brief Optimizes the graph between two nodes, by iteratively linearizing
      * the least-squares problem and solving the corresponding linear system.
-     * This function will update the graph poses and constraints, and will also
-     * update the line map based on the new pose configuration.
+     * This function will update the graph poses and constraints.
      */
     void optimizeGraph(const GraphNode &node1, const GraphNode &node2);
 
@@ -134,9 +129,6 @@ private:
     /** @brief Updates the graph constraints. */
     void updateGraphConstraints();
 
-    /** @brief Updates the line map based on the new graph pose configuration. */
-    void updateLineMap();
-
     /** @todo
      * @brief Recovers the information matrix H of the computed mean of state x,
      * from the sparse matrix used in the linear solver.
@@ -146,7 +138,5 @@ private:
     void diff(Vec2& vec, const Pose2D& p);
     void plus(Vec2& vec, const Pose2D& p);
 };
-
-QDebug operator<< (QDebug dbg, const PoseGraph &graph);
 
 #endif

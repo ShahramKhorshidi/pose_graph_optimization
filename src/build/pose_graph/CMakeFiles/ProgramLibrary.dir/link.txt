@@ -1,0 +1,2 @@
+/usr/bin/ar qc libProgramLibrary.a CMakeFiles/ProgramLibrary.dir/GraphConstraint.cpp.o CMakeFiles/ProgramLibrary.dir/PoseGraph.cpp.o
+/usr/bin/ranlib libProgramLibrary.a

@@ -3,8 +3,7 @@
 
 #include <cmath>
 #include "Pose2D.h"
-#include "util/Vector.h"
-#include "util/Vec2.h"
+#include "Vector.h"
 #include "GraphConstraint.h"
 #include <eigen3/Eigen/Dense>
 #include <eigen3/Eigen/Sparse>
@@ -134,9 +133,6 @@ private:
      * from the sparse matrix used in the linear solver.
      */
     void getInformationMatrix(Eigen::SparseMatrix<double> HSparse);
-
-    void diff(Vec2& vec, const Pose2D& p);
-    void plus(Vec2& vec, const Pose2D& p);
 };
 
 #endif

@@ -48,26 +48,20 @@ void PoseGraph::addPriorNode(const Pose2D& priorPose)
     {
         currentNode.nodeId = nodesCount;
         currentNode.nodePose = priorPose;
+        currentNode.initPose = priorPose;
         graphNodes.append(currentNode);
         nodesCount++;
     }
 }
 
-void PoseGraph::addOdomNode(const Pose2D &odomPose, const Vector<LinePair>& confirmedLinePairs)
+void PoseGraph::addOdomNode(const Pose2D &odomPose)
 {
     currentNode.nodeId = nodesCount;
     // Odometry poses are corrected by the error we get for the last pose, after optimization.
     currentNode.nodePose = odomPose;
     currentNode.initPose = currentNode.nodePose;
 
-    // Storing the map lines, seen by the current pose.
-    for (uint j = 0; j < confirmedLinePairs.size(); j++)
-    {
-        currentNode.seenMapLines << confirmedLinePairs[j].mapLine;
-    }
-
     graphNodes.append(currentNode);
-    currentNode.seenMapLines.clear();
     nodesCount++;
 
     if (graphNodes.size() > 1)
@@ -82,7 +76,6 @@ void PoseGraph::connectLoopClosingNodes(uint nodeId1, uint nodeId2, const Pose2D
 {
     GraphNode& nodei = graphNodes[nodeId1];
     GraphNode& nodej = graphNodes[nodeId2];
-
     currentEdge.addLoopClosingConstraint(nodei, nodej, observation);
     graphConstraints.push_back(currentEdge);
 }
@@ -93,7 +86,7 @@ void PoseGraph::optimizeGraph(const GraphNode &node1, const GraphNode &node2)
 
     // Storing the last pose of the robot before the optimization.
     Pose2D beforeOptimization = graphNodes[nodesCount-1].nodePose;
-
+    
     // Creating the linear sysyem.
     uint NoOfNodes = node2.nodeId - node1.nodeId + 1;
     uint dim = 3 * NoOfNodes;
@@ -105,7 +98,7 @@ void PoseGraph::optimizeGraph(const GraphNode &node1, const GraphNode &node2)
         Pose2D pose = graphNodes[node1.nodeId+i].nodePose;
         ls.x(3*i) = pose.x;
         ls.x(3*i+1) = pose.y;
-        ls.x(3*i+2) = pose.z;
+        ls.x(3*i+2) = pose.theta;
     }
 
     uint numOfIter = 0;
@@ -115,11 +108,12 @@ void PoseGraph::optimizeGraph(const GraphNode &node1, const GraphNode &node2)
         ls.H = Eigen::MatrixXd::Zero(dim, dim);
         ls.b = Eigen::VectorXd::Zero(dim);
         ListIterator<GraphConstraint> edgeIter = graphConstraints.begin();
+        int index =0;
         while (edgeIter.hasNext())
         {
             GraphConstraint& edge = edgeIter.next();
             // We only optimize the graph between two loop closing nodes.
-            if (edge.i >= node1.nodeId)
+            if (edge.i >= node1.nodeId && edge.i <= node2.nodeId)
             {
                 edge.linearizeConstraint();
                 uint i = edge.i-node1.nodeId;
@@ -131,7 +125,7 @@ void PoseGraph::optimizeGraph(const GraphNode &node1, const GraphNode &node2)
 
                 ls.b.block<3, 1>(3*i, 0) += edge.getAij().transpose() * omega * edge.getErrorVector();
                 ls.b.block<3, 1>(3*j, 0) += edge.getBij().transpose() * omega * edge.getErrorVector();
-            }
+            }   
         }
         // Keep the first node fixed.
         ls.H.block<3, 3>(0, 0) += Eigen::Matrix3d::Identity();
@@ -164,7 +158,7 @@ void PoseGraph::optimizeGraph(const GraphNode &node1, const GraphNode &node2)
         {
             auto opt_stop = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(opt_stop - opt_start);
-            std::cout << "Optimization Successful! -- Total time:" << duration << "(ms) -- No of Iterations:"
+            std::cout << "Optimization Successful! -- Total time:" << "(ms) -- No of Iterations:"
                      << numOfIter << "-- Delta X Norm:" << ls.dx.norm() << std::endl;
             // Storing the correcting pose for the last pose after optimization.
             Pose2D& afterOptimization = graphNodes[nodesCount-1].nodePose;
@@ -216,26 +210,4 @@ Pose2D PoseGraph::getCorrectingPose() const
 void PoseGraph::getInformationMatrix(Eigen::SparseMatrix<double> HSparse)
 {
     
-}
-
-void PoseGraph::diff(Vec2& vec, const Pose2D& p)
-{
-    double c = std::cos(p.z);
-    double s = std::sin(p.z);
-    double px = -c * p.x - s * p.y;
-    double py = s * p.x - c * p.y;
-    double x = c * vec.x + s * vec.y + px;
-    double y = -s * vec.x + c * vec.y + py;
-    vec.x = x;
-    vec.y = y;
-}
-
-void PoseGraph::plus(Vec2& vec, const Pose2D& p)
-{
-    double c = std::cos(p.z);
-    double s = std::sin(p.z);
-    double x = c * vec.x - s * vec.y + p.x;
-    double y = s * vec.x + c * vec.y + p.y;
-    vec.x = x;
-    vec.y = y;
 }

@@ -1,0 +1,2 @@
+/usr/bin/ar qc libUtilLibrary.a CMakeFiles/UtilLibrary.dir/Pose2D.cpp.o
+/usr/bin/ranlib libUtilLibrary.a

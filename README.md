@@ -8,10 +8,11 @@ This is a C++ implementation of an efficient 2D pose graph optimization, by expl
 
 ### Dependencies
 
-Eigen, for optimization.
-OpenCV, for visualization.
+Eigen, for optimization. <br>
+Qt Creator, optional, if you want to run the example.
 ```
-sudo apt-get install libopencv-dev
+sudo apt-get update
+sudo apt-get install qtcreator
 ```
 
 ### Source Code
@@ -30,7 +31,7 @@ cmake ..
 make
 ```
 ### Quick Start
-You can run the example with recorded odometry data from a wheeled robot.
+You can run the example with recorded trajectory of a wheeled robot.
 Before running the example change the main.cpp at line 24, adapting the path to your local repository.
 ```
 cd pose_graph_optimization/build/example

@@ -83,7 +83,6 @@ void PoseGraph::connectLoopClosingNodes(uint nodeId1, uint nodeId2, const Pose2D
 void PoseGraph::optimizeGraph(const GraphNode &node1, const GraphNode &node2)
 {
     auto opt_start = std::chrono::high_resolution_clock::now();
-
     // Storing the last pose of the robot before the optimization.
     Pose2D beforeOptimization = graphNodes[nodesCount-1].nodePose;
     
@@ -158,8 +157,10 @@ void PoseGraph::optimizeGraph(const GraphNode &node1, const GraphNode &node2)
         {
             auto opt_stop = std::chrono::high_resolution_clock::now();
             auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(opt_stop - opt_start);
-            std::cout << "Optimization Successful! -- Total time:" << "(ms) -- No of Iterations:"
-                     << numOfIter << "-- Delta X Norm:" << ls.dx.norm() << std::endl;
+            std::cout << "\n==== Optimization Successful! ==== " << 
+                         "\n --- Total time=" << duration.count() << "(ms)" <<
+                         "\n --- No of Iterations=" << numOfIter << 
+                         "\n --- Delta_X Norm=" << ls.dx.norm() << std::endl;
             // Storing the correcting pose for the last pose after optimization.
             Pose2D& afterOptimization = graphNodes[nodesCount-1].nodePose;
             correctingPose = afterOptimization.diff(beforeOptimization);

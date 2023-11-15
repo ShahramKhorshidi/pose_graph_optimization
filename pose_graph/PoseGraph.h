@@ -2,7 +2,6 @@
 #define POSEGRAPH_H_
 
 #include <cmath>
-#include <list>
 #include <vector>
 #include "Pose2D.h"
 #include "GraphConstraint.h"
@@ -75,7 +74,7 @@ public:
     GraphNode temp;
     GraphConstraint currentEdge;
     std::vector<GraphNode> graphNodes;
-    std::list<GraphConstraint> graphConstraints;
+    std::vector<GraphConstraint> graphConstraints;
      
 private:
     static uint nodesCount;

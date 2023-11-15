@@ -106,10 +106,8 @@ void PoseGraph::optimizeGraph(const GraphNode &node1, const GraphNode &node2)
         /** @brief Linearizing the least-squares problem. */
         ls.H = Eigen::MatrixXd::Zero(dim, dim);
         ls.b = Eigen::VectorXd::Zero(dim);
-        std::list<GraphConstraint>::iterator edgeIter = graphConstraints.begin();
-        while (edgeIter != graphConstraints.end())
+        for (auto& edge : graphConstraints)
         {
-            GraphConstraint& edge = *edgeIter;
             // We only optimize the graph between two loop closing nodes.
             if (edge.i >= node1.nodeId && edge.i <= node2.nodeId)
             {
@@ -124,7 +122,6 @@ void PoseGraph::optimizeGraph(const GraphNode &node1, const GraphNode &node2)
                 ls.b.block<3, 1>(3*i, 0) += edge.getAij().transpose() * omega * edge.getErrorVector();
                 ls.b.block<3, 1>(3*j, 0) += edge.getBij().transpose() * omega * edge.getErrorVector();
             }
-            ++edgeIter;  // Move to the next element
         }
         // Keep the first node fixed.
         ls.H.block<3, 3>(0, 0) += Eigen::Matrix3d::Identity();
@@ -193,14 +190,11 @@ void PoseGraph::updateGraphPoses(const Eigen::VectorXd &poseVector, uint nodeId1
 
 void PoseGraph::updateGraphConstraints()
 {
-    std::list<GraphConstraint>::iterator edgeIter = graphConstraints.begin();
-    while (edgeIter != graphConstraints.end())
+    for (auto& edge : graphConstraints)
     {
-        GraphConstraint& edge = *edgeIter;
         uint i = edge.i;
         uint j = edge.j;
         edge.updateConstraint(graphNodes[i], graphNodes[j]);
-        ++edgeIter;
     }
 }
 

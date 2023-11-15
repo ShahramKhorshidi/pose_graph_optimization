@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 #include <QApplication>
 #include <QGraphicsScene>
 #include <QGraphicsView>
@@ -20,7 +21,8 @@ int main(int argc, char *argv[]) {
     scene.setSceneRect(-400, -1400, 1000, 1600); // Set scene size
 
     // Read trajectory data from a file
-    std::ifstream inputFile("/home/khorshidi/git/pose_graph_optimization/example/robot_trajectory.log");
+    std::string pathToDir = "/home/path-to-the-repo"; // CHANGE the path to the repo directory here
+    std::ifstream inputFile(pathToDir + "/pose_graph_optimization/example/robot_trajectory.log");
     if (!inputFile.is_open()) {
         std::cerr << "Error opening input file" << std::endl;
         return -1;
@@ -33,8 +35,10 @@ int main(int argc, char *argv[]) {
     }
 
     // Load an image for the robot
-    QPixmap robotImageRed("/home/khorshidi/git/pose_graph_optimization/example/robot_image_red.png");
-    QPixmap robotImageGreen("/home/khorshidi/git/pose_graph_optimization/example/robot_image_green.png");
+    std::string path1 = pathToDir + "/pose_graph_optimization/example/robot_image_red.png";
+    std::string path2 = pathToDir + "/pose_graph_optimization/example/robot_image_green.png";
+    QPixmap robotImageRed(path1.c_str());
+    QPixmap robotImageGreen(path2.c_str());
 
     // Create a QElapsedTimer to measure time
     QElapsedTimer timer;

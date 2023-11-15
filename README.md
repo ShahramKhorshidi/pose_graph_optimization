@@ -30,8 +30,10 @@ cmake ..
 make
 ```
 ### Quick Start
+You can run the example with recorded odometry data from a wheeled robot.
+Before running the example change the main.cpp at line 24, adapting the path to your local repository.
 ```
-cd example
+cd pose_graph_optimization/build/example
 ./RobotVisualization
 ```
 ## Framework

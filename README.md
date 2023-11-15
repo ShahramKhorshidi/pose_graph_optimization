@@ -23,9 +23,17 @@ git clone git@github.com:ShahramKhorshidi/pose_graph_optimization.git
 ```
 
 ### Build
-
+```
+cd pose_graph_optimization
+mkdir build && cd build/ 
+cmake ..
+make
+```
 ### Quick Start
-
+```
+cd example
+./RobotVisualization
+```
 ## Framework
 
 
